@@ -8,6 +8,7 @@ import { StatusBadge }         from '@/components/dashboard/StatusBadge'
 import { MetricsGrid }         from '@/components/dashboard/MetricsGrid'
 import { ConfidenceGauge }     from '@/components/dashboard/ConfidenceGauge'
 import { RunbookSlideOver }    from '@/components/dashboard/RunbookSlideOver'
+import { TargetScanner }       from '@/components/dashboard/TargetScanner'
 import { Activity, Wifi, WifiOff, Clock } from 'lucide-react'
 
 export default function NOCDashboard() {
@@ -94,6 +95,9 @@ export default function NOCDashboard() {
         {/* Dashboard operativo */}
         {lastUpdatedAt && (
           <>
+            {/* Target Scanner Interactivo para Demo y Jurado */}
+            <TargetScanner />
+
             {/* Badge — muestra displayStatus, no el internal status */}
             <StatusBadge status={displayStatus} />
 
