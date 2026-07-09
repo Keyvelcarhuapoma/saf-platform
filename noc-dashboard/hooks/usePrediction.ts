@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 import { useDashboardStore } from '@/lib/store'
 import type { PredictionResponse } from '@/lib/types'
 
-const ENGINE_URL    = process.env.NEXT_PUBLIC_ENGINE_URL    ?? 'http://localhost:8000'
+const ENGINE_URL    = process.env.NEXT_PUBLIC_ENGINE_URL    ?? 'https://saf-platform.onrender.com'
 const POLL_INTERVAL = Number(process.env.NEXT_PUBLIC_POLL_INTERVAL_MS ?? 15000)
 
 async function fetchPrediction(url: string): Promise<PredictionResponse> {
