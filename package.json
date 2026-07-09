@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "cd noc-dashboard && npm run dev",
-    "build": "cd noc-dashboard && npm install && npm run build",
-    "start": "cd noc-dashboard && npm run start"
+    "dev": "([ -d noc-dashboard ] && cd noc-dashboard || true) && npm run dev",
+    "build": "([ -d noc-dashboard ] && cd noc-dashboard || true) && npm install && npm run build",
+    "start": "([ -d noc-dashboard ] && cd noc-dashboard || true) && npm run start"
   }
 }
