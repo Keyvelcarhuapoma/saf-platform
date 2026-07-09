@@ -1,0 +1,5 @@
+{
+  "version": 2,
+  "buildCommand": "cd noc-dashboard && npm install && npm run build",
+  "outputDirectory": "noc-dashboard/.next"
+}
