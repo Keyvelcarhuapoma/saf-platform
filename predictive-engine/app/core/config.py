@@ -4,8 +4,8 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     # ── InfluxDB ──────────────────────────────────────────────────────────────
-    influx_url:    str = Field(default="http://localhost:8086", alias="INFLUX_URL")
-    influx_token:  str = Field(default="saf_demo_token_12345", alias="INFLUX_TOKEN")
+    influx_url:    str = Field(default="https://us-east-1-1.aws.cloud2.influxdata.com", alias="INFLUX_URL")
+    influx_token:  str = Field(default="X3-fgsZ-aaYlR4q89xwRIlPzeF9k5gUqsljuv0xLGMADrrZNlr9XNSrTDPN-O1YwwKjXOd9_cr90apg3viJ-EQ==", alias="INFLUX_TOKEN")
     influx_org:    str = Field(default="saf_org", alias="INFLUX_ORG")
     influx_bucket: str = Field(default="saf_telemetry", alias="INFLUX_BUCKET")
 
