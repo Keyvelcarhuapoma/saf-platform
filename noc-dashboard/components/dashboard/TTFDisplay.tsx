@@ -10,6 +10,31 @@ export function TTFDisplay() {
   const points   = useDashboardStore(s => s.prediction?.data_points_used ?? 0)
   const colors   = getStatusColor(status)
 
+  const mainTarget = useDashboardStore(s => s.activeMainTarget)
+  const isExternalTarget = mainTarget && !mainTarget.url.includes('localhost:3001')
+
+  if (isExternalTarget) {
+    const isErr = mainTarget.status === 'ERROR'
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-8">
+        <p className="text-xs font-mono uppercase tracking-[0.3em] text-zinc-500">
+          Estado del servidor principal seleccionado
+        </p>
+        <div className={cn(
+          'font-mono font-black leading-none tracking-tight transition-colors duration-700 text-[72px] md:text-[110px] lg:text-[136px]',
+          isErr ? 'text-red-500 animate-pulse' : 'text-emerald-400',
+        )}>
+          {isErr ? 'OFFLINE' : '> 24h'}
+        </div>
+        <p className={cn("text-sm font-mono text-center max-w-lg", isErr ? "text-red-400/90 font-semibold" : "text-zinc-500")}>
+          {isErr
+            ? `⚠️ El servidor principal (${mainTarget.name}) es inaccesible o no responde en la red.`
+            : `🟢 Servidor externo operativo (${mainTarget.name}) — Latencia verificada: ${mainTarget.latency} ms.`}
+        </p>
+      </div>
+    )
+  }
+
   // Estado de calibración — no mostramos TTF sino progreso de recolección
   if (status === 'CALIBRATING' && progress !== null) {
     const pct = Math.round(progress * 100)

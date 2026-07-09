@@ -13,24 +13,27 @@
 
 import { create } from 'zustand'
 import type { DashboardState, PredictionResponse } from './types'
+import type { MonitoredTarget } from '@/components/dashboard/TargetScanner'
 
 interface DashboardActions {
-  setPrediction:     (prediction: PredictionResponse) => void
-  setLoading:        (loading: boolean) => void
-  setConnected:      (connected: boolean) => void
-  incrementError:    () => void
-  resetErrors:       () => void
-  openRunbook:       () => void
-  closeRunbook:      () => void
-  acknowledge:       () => void
-  resetAcknowledge:  () => void
+  setPrediction:       (prediction: PredictionResponse) => void
+  setLoading:          (loading: boolean) => void
+  setConnected:        (connected: boolean) => void
+  setActiveMainTarget: (target: MonitoredTarget | null) => void
+  incrementError:      () => void
+  resetErrors:         () => void
+  openRunbook:         () => void
+  closeRunbook:        () => void
+  acknowledge:         () => void
+  resetAcknowledge:    () => void
 }
 
-type DashboardStore = DashboardState & DashboardActions
+type DashboardStore = DashboardState & { activeMainTarget: MonitoredTarget | null } & DashboardActions
 
 export const useDashboardStore = create<DashboardStore>((set) => ({
   // ── Estado inicial ────────────────────────────────────────────────────────
   prediction:       null,
+  activeMainTarget: null,
   isLoading:        true,
   isConnected:      false,
   lastUpdatedAt:    null,
@@ -47,6 +50,8 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
     lastUpdatedAt: new Date(),
     errorCount:    0,
   }),
+
+  setActiveMainTarget: (activeMainTarget) => set({ activeMainTarget }),
 
   setLoading:   (isLoading)   => set({ isLoading }),
   setConnected: (isConnected) => set({ isConnected }),

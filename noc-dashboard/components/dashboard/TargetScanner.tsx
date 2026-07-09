@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Globe, Radar, CheckCircle2, ShieldCheck, RefreshCw, Server, ArrowRight, Plus, Trash2, Activity, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useDashboardStore } from '@/lib/store'
 
 export interface MonitoredTarget {
   id: string
@@ -43,11 +44,13 @@ export function TargetScanner() {
     } catch {}
   }, [])
 
-  // Guardar targets en localStorage v3
+  // Guardar targets en localStorage v3 y sincronizar con Zustand store global
   useEffect(() => {
     try {
       localStorage.setItem('saf_monitored_targets_v3', JSON.stringify(targets))
     } catch {}
+    const mainTarget = targets.find(t => t.isMain) || null
+    useDashboardStore.getState().setActiveMainTarget(mainTarget)
   }, [targets])
 
   // Simulación realista de fluctuación de latencias en los targets activos
