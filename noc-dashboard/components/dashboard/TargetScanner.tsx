@@ -1,14 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Globe, Radar, CheckCircle2, ShieldCheck, RefreshCw, Server, ArrowRight, Plus, Trash2, Activity } from 'lucide-react'
+import { Globe, Radar, CheckCircle2, ShieldCheck, RefreshCw, Server, ArrowRight, Plus, Trash2, Activity, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface MonitoredTarget {
   id: string
   name: string
   url: string
-  status: 'ONLINE' | 'WARNING' | 'CHECKING'
+  status: 'ONLINE' | 'WARNING' | 'CHECKING' | 'ERROR'
   latency: number
   ttfMinutes: number
   isMain: boolean
