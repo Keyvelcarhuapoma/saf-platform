@@ -4,9 +4,9 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     # ── InfluxDB ──────────────────────────────────────────────────────────────
-    influx_url:    str = Field(..., alias="INFLUX_URL")
-    influx_token:  str = Field(..., alias="INFLUX_TOKEN")
-    influx_org:    str = Field(..., alias="INFLUX_ORG")
+    influx_url:    str = Field(default="http://localhost:8086", alias="INFLUX_URL")
+    influx_token:  str = Field(default="saf_demo_token_12345", alias="INFLUX_TOKEN")
+    influx_org:    str = Field(default="saf_org", alias="INFLUX_ORG")
     influx_bucket: str = Field(default="saf_telemetry", alias="INFLUX_BUCKET")
 
     # ── Motor Predictivo ──────────────────────────────────────────────────────
