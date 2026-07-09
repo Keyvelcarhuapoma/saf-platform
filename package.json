@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "([ -d noc-dashboard ] && cd noc-dashboard || true) && npm run dev",
-    "build": "([ -d noc-dashboard ] && cd noc-dashboard || true) && npm install && npm run build",
+    "build": "([ -d noc-dashboard ] && cd noc-dashboard || true) && npm run build",
     "start": "([ -d noc-dashboard ] && cd noc-dashboard || true) && npm run start"
   }
 }
