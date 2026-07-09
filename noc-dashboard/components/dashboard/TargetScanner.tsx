@@ -30,6 +30,7 @@ export function TargetScanner() {
   const [inputUrl, setInputUrl] = useState('')
   const [inputName, setInputName] = useState('')
   const [isAdding, setIsAdding] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [targets, setTargets] = useState<MonitoredTarget[]>(DEFAULT_TARGETS)
 
   // Cargar targets guardados en localStorage con clave v3 para limpiar presets antiguos
@@ -53,7 +54,7 @@ export function TargetScanner() {
   useEffect(() => {
     const interval = setInterval(() => {
       setTargets(prev => prev.map(t => {
-        if (t.status === 'CHECKING') return t
+        if (t.status !== 'ONLINE') return t
         const delta = Math.floor(Math.random() * 7) - 3
         const newLat = Math.max(14, Math.min(65, t.latency + delta))
         return { ...t, latency: newLat }
@@ -62,18 +63,39 @@ export function TargetScanner() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleAddTarget = (e: React.FormEvent) => {
+  const handleAddTarget = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!inputUrl) return
+    setErrorMsg(null)
+    const rawUrl = inputUrl.trim()
+    if (!rawUrl) return
+
+    let urlToConnect = rawUrl
+    if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+      urlToConnect = 'https://' + rawUrl
+    }
+
+    let validUrl: URL
+    try {
+      validUrl = new URL(urlToConnect)
+      const host = validUrl.hostname
+      // Validar que sea localhost, IP válida o un dominio que contenga al menos un punto
+      const isValidHost = host === 'localhost' || /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) || (host.includes('.') && host.split('.').every(p => p.length > 0))
+      if (!isValidHost) {
+        throw new Error("Hostname inválido")
+      }
+    } catch {
+      setErrorMsg("⚠️ URL o dominio inválido. Formato esperado: https://mi-web.com o http://localhost:3001")
+      return
+    }
 
     setIsAdding(true)
     const newId = `t-${Date.now()}`
-    const displayName = inputName.trim() || inputUrl.replace(/https?:\/\//, '').split('/')[0]
+    const displayName = inputName.trim() || validUrl.hostname
 
     const tempTarget: MonitoredTarget = {
       id: newId,
       name: displayName,
-      url: inputUrl,
+      url: urlToConnect,
       status: 'CHECKING',
       latency: 0,
       ttfMinutes: 80.0,
@@ -84,16 +106,31 @@ export function TargetScanner() {
     setInputUrl('')
     setInputName('')
 
-    // Simular escaneo antes de marcar ONLINE
-    setTimeout(() => {
-      setIsAdding(false)
-      setTargets(prev => prev.map(t => t.id === newId ? {
-        ...t,
-        status: 'ONLINE',
-        latency: Math.floor(Math.random() * 25) + 18,
-        ttfMinutes: Math.floor(Math.random() * 50) + 45
-      } : t))
-    }, 1500)
+    // Ping real / verificación de resolubilidad desde el cliente
+    const startPing = performance.now()
+    let isOnline = true
+    let measuredLatency = Math.floor(Math.random() * 25) + 18
+
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 2500)
+      await fetch(urlToConnect, { mode: 'no-cors', method: 'GET', signal: controller.signal })
+      clearTimeout(timeoutId)
+      measuredLatency = Math.max(14, Math.min(220, Math.floor(performance.now() - startPing)))
+    } catch (err: any) {
+      // Si el fetch falla por DNS / dominio inexistente (ej: vfgf o dominio falso)
+      if (err?.name === 'AbortError' || err?.message?.includes('Failed to fetch') || err?.message?.includes('NetworkError') || err?.name === 'TypeError') {
+        isOnline = false
+      }
+    }
+
+    setIsAdding(false)
+    setTargets(prev => prev.map(t => t.id === newId ? {
+      ...t,
+      status: isOnline ? 'ONLINE' : 'ERROR',
+      latency: isOnline ? measuredLatency : 0,
+      ttfMinutes: isOnline ? Math.floor(Math.random() * 50) + 45 : 0
+    } : t))
   }
 
   const handleDeleteTarget = (id: string, e: React.MouseEvent) => {
@@ -138,6 +175,14 @@ export function TargetScanner() {
         </div>
       </div>
 
+      {/* Banner de error de validación */}
+      {errorMsg && (
+        <div className="mb-4 p-3 bg-red-950/70 border border-red-800/80 rounded-xl flex items-center gap-2.5 text-xs font-mono text-red-300 shadow-lg animate-in fade-in slide-in-from-top-1 duration-200">
+          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
       {/* Formulario de Adición */}
       <form onSubmit={handleAddTarget} className="flex flex-col md:flex-row gap-2.5 items-center mb-5 bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80">
         <div className="flex-1 flex flex-col sm:flex-row gap-2 w-full">
@@ -153,7 +198,10 @@ export function TargetScanner() {
             <input
               type="text"
               value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
+              onChange={(e) => {
+                setInputUrl(e.target.value)
+                if (errorMsg) setErrorMsg(null)
+              }}
               placeholder="URL a conectar (ej: https://mi-web.com o http://localhost:3001)"
               className="w-full bg-zinc-950/90 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 transition-all"
             />
@@ -232,13 +280,15 @@ export function TargetScanner() {
             <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60 text-[10px] font-mono">
               <div className="flex items-center gap-3">
                 <span className="text-zinc-400">
-                  Ping: <strong className={target.latency > 60 ? "text-amber-400" : "text-emerald-400"}>
-                    {target.status === 'CHECKING' ? '...' : `${target.latency} ms`}
+                  Ping: <strong className={target.status === 'ERROR' ? "text-red-400" : target.latency > 60 ? "text-amber-400" : "text-emerald-400"}>
+                    {target.status === 'CHECKING' ? '...' : target.status === 'ERROR' ? '— (Inaccesible)' : `${target.latency} ms`}
                   </strong>
                 </span>
                 <span className="text-zinc-600">|</span>
                 <span className="text-zinc-400">
-                  Estado: <strong className="text-emerald-400">Activo</strong>
+                  Estado: <strong className={target.status === 'ERROR' ? "text-red-400" : target.status === 'CHECKING' ? "text-amber-400" : "text-emerald-400"}>
+                    {target.status === 'ERROR' ? 'Error DNS' : target.status === 'CHECKING' ? 'Inspeccionando...' : 'Activo'}
+                  </strong>
                 </span>
               </div>
 
