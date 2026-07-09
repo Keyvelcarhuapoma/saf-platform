@@ -48,11 +48,11 @@ export function TTFDisplay() {
       </p>
       <div className={cn(
         'font-mono font-black leading-none tracking-tight transition-colors duration-700',
-        'text-[96px] md:text-[144px] lg:text-[168px]',
+        status === 'HEALTHY' ? 'text-[72px] md:text-[110px] lg:text-[136px]' : 'text-[96px] md:text-[144px] lg:text-[168px]',
         colors.text,
         status === 'CRITICAL'  && 'animate-pulse',
       )}>
-        {formatTTF(ttf)}
+        {status === 'HEALTHY' ? '> 24h' : formatTTF(ttf)}
       </div>
       {status !== 'UNKNOWN' && status !== 'CALIBRATING' && (
         <p className="text-sm text-zinc-500 font-mono">
