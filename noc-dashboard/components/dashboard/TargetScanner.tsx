@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Globe, Radar, CheckCircle2, ShieldCheck, RefreshCw, Server, ArrowRight, Plus, Trash2, ExternalLink, Activity, AlertTriangle } from 'lucide-react'
+import { Globe, Radar, CheckCircle2, ShieldCheck, RefreshCw, Server, ArrowRight, Plus, Trash2, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface MonitoredTarget {
@@ -16,22 +16,13 @@ export interface MonitoredTarget {
 
 const DEFAULT_TARGETS: MonitoredTarget[] = [
   {
-    id: 't-1',
-    name: '🛒 E-Commerce Cloud',
-    url: 'https://mi-tienda-web.vercel.app',
+    id: 't-main',
+    name: 'S.A.F. Target Server (Principal)',
+    url: 'http://localhost:3001',
     status: 'ONLINE',
-    latency: 34,
+    latency: 18,
     ttfMinutes: 56.4,
     isMain: true,
-  },
-  {
-    id: 't-2',
-    name: '🏦 Banking Gateway API',
-    url: 'https://gateway-banco.onrender.com',
-    status: 'ONLINE',
-    latency: 42,
-    ttfMinutes: 120.0,
-    isMain: false,
   },
 ]
 
@@ -41,30 +32,30 @@ export function TargetScanner() {
   const [isAdding, setIsAdding] = useState(false)
   const [targets, setTargets] = useState<MonitoredTarget[]>(DEFAULT_TARGETS)
 
-  // Cargar targets guardados en localStorage
+  // Cargar targets guardados en localStorage con clave v3 para limpiar presets antiguos
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('saf_monitored_targets')
+      const saved = localStorage.getItem('saf_monitored_targets_v3')
       if (saved) {
         setTargets(JSON.parse(saved))
       }
     } catch {}
   }, [])
 
-  // Guardar targets cada vez que cambien
+  // Guardar targets en localStorage v3
   useEffect(() => {
     try {
-      localStorage.setItem('saf_monitored_targets', JSON.stringify(targets))
+      localStorage.setItem('saf_monitored_targets_v3', JSON.stringify(targets))
     } catch {}
   }, [targets])
 
-  // Simulación realista de fluctuación de latencias en todos los targets
+  // Simulación realista de fluctuación de latencias en los targets activos
   useEffect(() => {
     const interval = setInterval(() => {
       setTargets(prev => prev.map(t => {
         if (t.status === 'CHECKING') return t
-        const delta = Math.floor(Math.random() * 9) - 4
-        const newLat = Math.max(15, Math.min(85, t.latency + delta))
+        const delta = Math.floor(Math.random() * 7) - 3
+        const newLat = Math.max(14, Math.min(65, t.latency + delta))
         return { ...t, latency: newLat }
       }))
     }, 3500)
@@ -86,21 +77,21 @@ export function TargetScanner() {
       status: 'CHECKING',
       latency: 0,
       ttfMinutes: 80.0,
-      isMain: targets.length === 0, // si no había ninguno, este es el principal
+      isMain: targets.length === 0, // Si no había ninguno, este es el principal
     }
 
     setTargets(prev => [tempTarget, ...prev])
     setInputUrl('')
     setInputName('')
 
-    // Simular escaneo de 1.5s antes de marcar ONLINE
+    // Simular escaneo antes de marcar ONLINE
     setTimeout(() => {
       setIsAdding(false)
       setTargets(prev => prev.map(t => t.id === newId ? {
         ...t,
         status: 'ONLINE',
-        latency: Math.floor(Math.random() * 28) + 20,
-        ttfMinutes: Math.floor(Math.random() * 60) + 45
+        latency: Math.floor(Math.random() * 25) + 18,
+        ttfMinutes: Math.floor(Math.random() * 50) + 45
       } : t))
     }, 1500)
   }
@@ -109,7 +100,6 @@ export function TargetScanner() {
     e.stopPropagation()
     setTargets(prev => {
       const next = prev.filter(t => t.id !== id)
-      // Si borramos el principal y quedan otros, hacer principal al primero
       if (next.length > 0 && !next.some(t => t.isMain)) {
         next[0].isMain = true
       }
@@ -138,24 +128,24 @@ export function TargetScanner() {
                 S.A.F. Multi-Target Fleet Monitor
               </h3>
               <span className="text-[10px] bg-emerald-950/40 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-800/60 font-mono">
-                {targets.length} Objetivos Activos
+                {targets.length} {targets.length === 1 ? 'Objetivo Activo' : 'Objetivos Activos'}
               </span>
             </div>
             <p className="text-[11px] font-mono text-zinc-500 mt-0.5">
-              Escanea simultáneamente múltiples servidores/webs y selecciona cuál inspeccionar a fondo
+              Inspección y telemetría en tiempo real sobre los objetivos de red conectados
             </p>
           </div>
         </div>
       </div>
 
-      {/* Formulario de Adición Rápida */}
+      {/* Formulario de Adición */}
       <form onSubmit={handleAddTarget} className="flex flex-col md:flex-row gap-2.5 items-center mb-5 bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80">
         <div className="flex-1 flex flex-col sm:flex-row gap-2 w-full">
           <input
             type="text"
             value={inputName}
             onChange={(e) => setInputName(e.target.value)}
-            placeholder="Nombre (ej: Tienda Producción)"
+            placeholder="Nombre del servidor (ej: Portal Producción)"
             className="w-full sm:w-1/3 bg-zinc-950/90 border border-zinc-800 rounded-lg px-3 py-2 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 transition-all"
           />
           <div className="relative flex-1">
@@ -164,7 +154,7 @@ export function TargetScanner() {
               type="text"
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
-              placeholder="URL a monitorear (ej: https://mi-web.com o http://localhost:3001)"
+              placeholder="URL a conectar (ej: https://mi-web.com o http://localhost:3001)"
               className="w-full bg-zinc-950/90 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 transition-all"
             />
           </div>
@@ -183,7 +173,7 @@ export function TargetScanner() {
           {isAdding ? (
             <>
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              <span>Escaneando y Vinculando...</span>
+              <span>Conectando...</span>
             </>
           ) : (
             <>
@@ -194,7 +184,7 @@ export function TargetScanner() {
         </button>
       </form>
 
-      {/* Lista / Grid de Targets Simultáneos */}
+      {/* Lista / Grid de Targets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {targets.map((target) => (
           <div
@@ -207,7 +197,6 @@ export function TargetScanner() {
                 : "bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700/80 hover:bg-zinc-900/70"
             )}
           >
-            {/* Top row: Name + Delete */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 overflow-hidden">
                 <div className={cn(
@@ -228,20 +217,18 @@ export function TargetScanner() {
               <button
                 type="button"
                 onClick={(e) => handleDeleteTarget(target.id, e)}
-                title="Dejar de monitorear este objetivo"
+                title="Eliminar este servidor"
                 className="p-1 rounded-md text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* Middle row: URL */}
             <div className="text-[11px] font-mono text-zinc-500 truncate flex items-center gap-1">
               <Globe className="w-3 h-3 text-zinc-600 flex-shrink-0" />
               <span className="truncate">{target.url}</span>
             </div>
 
-            {/* Bottom row: Metrics bar */}
             <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60 text-[10px] font-mono">
               <div className="flex items-center gap-3">
                 <span className="text-zinc-400">
@@ -251,12 +238,12 @@ export function TargetScanner() {
                 </span>
                 <span className="text-zinc-600">|</span>
                 <span className="text-zinc-400">
-                  TTF: <strong className="text-zinc-200">{target.ttfMinutes}m</strong>
+                  Estado: <strong className="text-emerald-400">Activo</strong>
                 </span>
               </div>
 
               <div className="text-zinc-500 group-hover:text-emerald-400 transition-colors flex items-center gap-1 text-[10px]">
-                <span>{target.isMain ? 'Inspeccionando' : 'Clic para enfocar'}</span>
+                <span>{target.isMain ? 'Inspeccionando' : 'Seleccionar Principal'}</span>
                 <ArrowRight className="w-2.5 h-2.5" />
               </div>
             </div>
@@ -266,8 +253,8 @@ export function TargetScanner() {
         {targets.length === 0 && (
           <div className="col-span-full py-8 text-center border border-dashed border-zinc-800 rounded-xl">
             <Activity className="w-8 h-8 text-zinc-600 mx-auto mb-2 opacity-50" />
-            <p className="text-xs font-mono text-zinc-400">No tienes objetivos en monitoreo activo</p>
-            <p className="text-[11px] font-mono text-zinc-600">Usa el formulario superior para añadir tu primera URL o servidor</p>
+            <p className="text-xs font-mono text-zinc-400">No hay servidores monitoreados</p>
+            <p className="text-[11px] font-mono text-zinc-600 mt-1">Añade tu servidor o página web usando el formulario superior</p>
           </div>
         )}
       </div>
